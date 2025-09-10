@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('vending_machine_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->integer('stock'); // 在庫数
             $table->timestamps();
         });
     }

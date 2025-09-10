@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('vending_machines', function (Blueprint $table) {
             $table->id();
+            $table->string('name');       // 自販機の名前
+            $table->decimal('latitude', 10, 7);   // 緯度
+            $table->decimal('longitude', 10, 7);  // 経度
             $table->timestamps();
         });
     }
