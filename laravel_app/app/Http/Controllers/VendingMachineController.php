@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+
 use App\Models\VendingMachine;
 
 class VendingMachineController extends Controller
 {
     public function index()
     {
-        return VendingMachine::with('inventories.product')->get();
+        $machines = VendingMachine::with('inventories.product')->get();
+        return view('vending_machines.index', compact('machines'));
     }
 
     public function show($id)
     {
-        return VendingMachine::with('inventories.product')->findOrFail($id);
+        $machine = VendingMachine::with('inventories.product')->findOrFail($id);
+        return view('vending_machines.show', compact('machine'));
     }
 
     public function nearby(Request $request)
