@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\VendingMachine;
 
 class VendingMachineController extends Controller
@@ -22,17 +21,31 @@ class VendingMachineController extends Controller
 
     public function nearby(Request $request)
     {
-        $lat = $request->input('lat');
-        $lng = $request->input('lng');
+        $lat = $request->query('lat');
+        $lng = $request->query('lng');
 
-        return VendingMachine::selectRaw(
-            "*, (6371 * acos(cos(radians(?)) * cos(radians(latitude)) 
-            * cos(radians(longitude) - radians(?)) 
-            + sin(radians(?)) * sin(radians(latitude)))) AS distance",
+        if (!$lat || !$lng) {
+            // 使いやすく、エラー時は空リストを返すかメッセージ表示にしても良い
+            return view('vending_machines.nearby', [
+                'machines' => collect(),
+                'lat' => $lat,
+                'lng' => $lng
+            ]);
+        }
+
+        $machines = VendingMachine::selectRaw(
+            "vending_machines.*, 
+             (6371 * acos(
+                  cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
+                + sin(radians(?)) * sin(radians(latitude))
+            )) AS distance",
             [$lat, $lng, $lat]
         )
         ->orderBy('distance')
-        ->limit(5)
+        ->with('inventories.product')
+        ->take(5)
         ->get();
+
+        return view('vending_machines.nearby', compact('machines', 'lat', 'lng'));
     }
 }
