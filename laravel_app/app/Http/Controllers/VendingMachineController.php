@@ -48,4 +48,30 @@ class VendingMachineController extends Controller
 
         return view('vending_machines.nearby', compact('machines', 'lat', 'lng'));
     }
+    public function nearbyApi(Request $request)
+    {
+        // dd($request->input());
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+
+        if (!$lat || !$lng) {
+            return response()->json(['error' => 'lat and lng are required'], 400);
+        }
+
+        $machines = VendingMachine::selectRaw(
+            "vending_machines.*, 
+            (6371 * acos(
+                cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
+                + sin(radians(?)) * sin(radians(latitude))
+            )) AS distance",
+            [$lat, $lng, $lat]
+        )
+        ->orderBy('distance')
+        ->with('inventories.product')
+        ->take(50)
+        ->get();
+
+        return response()->json($machines);
+    }
+
 }
