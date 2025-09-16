@@ -8,3 +8,4 @@ Route::get('/vending-machines/nearby', [VendingMachineController::class, 'nearby
     ->name('vending-machines.nearby');
 Route::get('/vending-machines', [VendingMachineController::class, 'index']);
 Route::get('/vending-machines/{id}', [VendingMachineController::class, 'show']);
+Route::get('/map', function () { return view('map'); });
