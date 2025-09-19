@@ -9,13 +9,11 @@ class VendingMachineSeeder extends Seeder
 {
     public function run()
     {
-        VendingMachine::create(['name' => '駅前自販機', 'latitude' => 35.6700, 'longitude' => 139.6917]);
-        VendingMachine::create(['name' => '公園前自販機', 'latitude' => 35.6890, 'longitude' => 139.6920]);
-        VendingMachine::create(['name' => '学校前自販機', 'latitude' => 35.6885, 'longitude' => 139.6905]);
-        \App\Models\VendingMachine::create([
-            'name' => 'テスト自販機',
-            'latitude' => 35.6895,
-            'longitude' => 139.6917,
-        ]);
+        $centerLat = 35.170915;
+        $centerLng = 136.881537;
+
+        for ($i = 1; $i <= 50; $i++) {
+            VendingMachine::create(['name' => "自販機{$i}", 'latitude' => $centerLat + (mt_rand(-100, 100) / 1000), 'longitude' => $centerLng + (mt_rand(-100, 100) / 1000),]);
+        }
     }
 }

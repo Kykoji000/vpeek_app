@@ -2,49 +2,47 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自販機マップ</title>
-
-    <!-- LeafletのCSS -->
-    <link 
-      rel="stylesheet" 
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-    />
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        #map {
-            width: 100%;
-            height: 100vh;
-        }
+        #map { height: 100vh; }
     </style>
 </head>
 <body>
     <h1>自販機マップ</h1>
     <div id="map"></div>
 
-    <!-- LeafletのJS -->
-    <script 
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
-
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // 中心座標（東京駅付近）
-        const centerLat = 35.170768;
-        const centerLng = 136.881951;
+        const map = L.map('map').setView([35.170915, 136.881537], 13);
 
-        // マップを生成
-        const map = L.map('map').setView([centerLat, centerLng], 13);
-
-        // OpenStreetMapタイルを読み込み
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+            maxZoom: 19,
         }).addTo(map);
 
-        // サンプルのマーカー（東京駅）
-        L.marker([centerLat, centerLng])
-            .addTo(map)
-            .bindPopup('名古屋駅のサンプル自販機')
-            .openPopup();
+        fetch('/api/vending-machines/nearby?lat=35.170915&lng=136.881537')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(vm => {
+                    let popupContent = `<b>${vm.name}</b><br>`;
+
+                    if (vm.inventories && vm.inventories.length > 0) {
+                        popupContent += "<ul>";
+                        vm.inventories.forEach(inv => {
+                            popupContent += `<li>${inv.product.name} - ${inv.product.price}円 (${inv.stock}個)</li>`;
+                        });
+                        popupContent += "</ul>";
+                    } else {
+                        popupContent += "商品情報なし";
+                    }
+
+                    L.marker([vm.latitude, vm.longitude])
+                        .addTo(map)
+                        .bindPopup(popupContent);
+                });
+            })
+            .catch(err => console.error(err));
     </script>
+
 </body>
 </html>
