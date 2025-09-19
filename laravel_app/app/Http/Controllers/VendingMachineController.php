@@ -25,7 +25,6 @@ class VendingMachineController extends Controller
         $lng = $request->query('lng');
 
         if (!$lat || !$lng) {
-            // 使いやすく、エラー時は空リストを返すかメッセージ表示にしても良い
             return view('vending_machines.nearby', [
                 'machines' => collect(),
                 'lat' => $lat,
@@ -50,7 +49,6 @@ class VendingMachineController extends Controller
     }
     public function nearbyApi(Request $request)
     {
-        // dd($request->input());
         $lat = $request->input('lat');
         $lng = $request->input('lng');
 
@@ -67,11 +65,12 @@ class VendingMachineController extends Controller
             [$lat, $lng, $lat]
         )
         ->orderBy('distance')
-        ->with('inventories.product')
+        ->with(['inventories.product'])
         ->take(50)
         ->get();
 
         return response()->json($machines);
     }
+
 
 }

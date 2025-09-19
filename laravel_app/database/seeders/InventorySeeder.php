@@ -4,36 +4,24 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Inventory;
+use App\Models\VendingMachine;
+use App\Models\Product;
 
 class InventorySeeder extends Seeder
 {
     public function run()
     {
-        // 自販機1に全商品ランダム在庫
-        for ($i = 1; $i <= 4; $i++) {
-            Inventory::create([
-                'vending_machine_id' => 1,
-                'product_id' => $i,
-                'stock' => rand(0, 10),
-            ]);
-        }
+        $machines = VendingMachine::all();
+        $products = Product::all();
 
-        // 自販機2に全商品ランダム在庫
-        for ($i = 1; $i <= 4; $i++) {
-            Inventory::create([
-                'vending_machine_id' => 2,
-                'product_id' => $i,
-                'stock' => rand(0, 10),
-            ]);
-        }
-
-        // 自販機3に全商品ランダム在庫
-        for ($i = 1; $i <= 4; $i++) {
-            Inventory::create([
-                'vending_machine_id' => 3,
-                'product_id' => $i,
-                'stock' => rand(0, 10),
-            ]);
+        foreach ($machines as $machine) {
+            foreach ($products as $product) {
+                Inventory::create([
+                    'vending_machine_id' => $machine->id,
+                    'product_id' => $product->id,
+                    'stock' => rand(0, 20),
+                ]);
+            }
         }
     }
 }
