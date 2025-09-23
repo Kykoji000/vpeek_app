@@ -7,11 +7,11 @@ use App\Models\Product;
 
 class ProductSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         Product::create(['name' => 'コーラ', 'price' => 150]);
         Product::create(['name' => 'お茶', 'price' => 120]);
         Product::create(['name' => '水', 'price' => 100]);
-        Product::create(['name' => 'レッドブル', 'price' => 250]);
+        Product::create(['name' => 'エナジー', 'price' => 200]);
     }
 }

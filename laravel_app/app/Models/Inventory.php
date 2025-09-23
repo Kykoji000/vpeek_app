@@ -9,20 +9,15 @@ class Inventory extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'vending_machine_id',
-        'product_id',
-        'stock',
-    ];
-
-    public function vendingMachine()
-    {
-        return $this->belongsTo(VendingMachine::class);
-    }
+    protected $fillable = ['vending_machine_id', 'product_id', 'stock'];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
-}
 
+    public function vendingMachine()
+    {
+        return $this->belongsTo(VendingMachine::class);
+    }
+}
