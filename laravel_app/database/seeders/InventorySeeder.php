@@ -9,7 +9,7 @@ use App\Models\Product;
 
 class InventorySeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $machines = VendingMachine::all();
         $products = Product::all();

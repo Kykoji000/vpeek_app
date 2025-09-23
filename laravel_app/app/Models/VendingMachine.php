@@ -9,11 +9,7 @@ class VendingMachine extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'latitude',
-        'longitude',
-    ];
+    protected $fillable = ['name', 'latitude', 'longitude'];
 
     public function inventories()
     {
