@@ -3,142 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <title>自販機マップ</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        html,body { height:100%; margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-        #map { height: calc(100vh - 48px); } 
-        header { height:48px; padding:10px 16px; background:#fafafa; border-bottom:1px solid #eee; }
-        .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9998; }
-        .modal-window { display:none; position:fixed; z-index:9999; left:50%; top:12%; transform:translateX(-50%); background:#fff; border-radius:8px; width:min(720px,94%); max-height:76vh; overflow:auto; box-shadow:0 8px 30px rgba(0,0,0,0.25); padding:18px; }
-        .modal-window h2 { margin:0 0 12px; font-size:18px; }
-        .modal-close { display:inline-block; margin-top:12px; padding:8px 12px; background:#2b6cb0; color:#fff; border-radius:6px; cursor:pointer; text-decoration:none; }
-        ul.prod-list { padding-left:18px; margin:0; }
-        ul.prod-list li { margin:6px 0; }
+        #map {
+            height: 600px;
+        }
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-btn {
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background: #f5f5f5;
+        }
+        .out-of-stock {
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <strong>自販機マップ</strong>
-    </header>
-
+    <h1>自販機マップ</h1>
     <div id="map"></div>
 
-    <!-- モーダル要素 -->
-    <div id="modalBackdrop" class="modal-backdrop" onclick="closeModal()"></div>
-    <div id="modalWindow" class="modal-window" role="dialog" aria-hidden="true">
-        <h2 id="modalTitle">読み込み中…</h2>
-        <div id="modalBody">
-            <ul id="modalItems" class="prod-list"></ul>
+    <!-- モーダル -->
+    <div id="machineModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="machineName">自販機詳細</h2>
+                <span class="close-btn" id="closeModal">&times;</span>
+            </div>
+            <div class="product-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>商品名</th>
+                            <th>価格</th>
+                            <th>在庫</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productList">
+                        <!-- 商品が入る -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <a class="modal-close" onclick="closeModal()">閉じる</a>
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // 名古屋中心
-        const CENTER_LAT = 35.170915, CENTER_LNG = 136.881537;
-        const map = L.map('map').setView([CENTER_LAT, CENTER_LNG], 13);
+        var map = L.map('map').setView([35.170768, 136.881951], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // モーダル helpers
-        function openModal() {
-            document.getElementById('modalBackdrop').style.display = 'block';
-            document.getElementById('modalWindow').style.display = 'block';
-            document.getElementById('modalWindow').setAttribute('aria-hidden','false');
-        }
-        function closeModal() {
-            document.getElementById('modalBackdrop').style.display = 'none';
-            document.getElementById('modalWindow').style.display = 'none';
-            document.getElementById('modalWindow').setAttribute('aria-hidden','true');
-        }
+        var modal = document.getElementById('machineModal');
+        var closeModal = document.getElementById('closeModal');
+        var machineName = document.getElementById('machineName');
+        var productList = document.getElementById('productList');
 
-        // 自販機データ取得 & マーカー描画
+        closeModal.onclick = function() {
+            modal.style.display = "none";
+        };
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+
         fetch('/api/vending-machines')
-            .then(r => {
-                if (!r.ok) throw new Error('API error ' + r.status);
-                return r.json();
-            })
+            .then(res => res.json())
             .then(data => {
-                data.forEach(vm => {
-                    const lat = parseFloat(vm.latitude ?? vm.lat ?? vm.latitude);
-                    const lng = parseFloat(vm.longitude ?? vm.lng ?? vm.longitude);
-                    if (!isFinite(lat) || !isFinite(lng)) return;
+                data.forEach(machine => {
+                    var marker = L.marker([machine.latitude, machine.longitude]).addTo(map);
+                    marker.bindPopup(machine.name);
 
-                    const marker = L.marker([lat, lng]).addTo(map);
+                    marker.on('click', () => {
+                        fetch(`/api/vending-machines/${machine.id}`)
+                            .then(res => res.json())
+                            .then(machineData => {
+                                machineName.textContent = machineData.name;
+                                productList.innerHTML = '';
 
-                    // popup 中のボタンは popupopen でイベントを付与する方式にする
-                    const popupHtml = `<b>${escapeHtml(vm.name)}</b><br><button class="show-btn" data-id="${vm.id}">詳細を見る</button>`;
-                    marker.bindPopup(popupHtml);
+                                if (machineData.inventories && machineData.inventories.length > 0) {
+                                    machineData.inventories.forEach(inv => {
+                                        var tr = document.createElement('tr');
+                                        if (inv.stock === 0) {
+                                            tr.classList.add('out-of-stock');
+                                        }
+                                        tr.innerHTML = `
+                                            <td>${inv.product.name}</td>
+                                            <td>${inv.product.price}円</td>
+                                            <td>${inv.stock}</td>
+                                        `;
+                                        productList.appendChild(tr);
+                                    });
+                                } else {
+                                    productList.innerHTML = `
+                                        <tr><td colspan="3">商品情報がありません</td></tr>
+                                    `;
+                                }
+
+                                modal.style.display = "block";
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                alert('商品データの取得に失敗しました');
+                            });
+                    });
                 });
             })
             .catch(err => {
                 console.error(err);
-                alert('自販機データの取得に失敗しました。コンソールを確認してください。');
+                alert('自販機データの取得に失敗しました');
             });
-
-        // popupopen で show-btn に handler を付与
-        map.on('popupopen', function(e) {
-            let popupEl = null;
-            try {
-                popupEl = (typeof e.popup.getElement === 'function') ? e.popup.getElement() : e.popup._contentNode;
-            } catch (err) {
-                popupEl = e.popup._contentNode || null;
-            }
-            if (!popupEl) return;
-
-            const btn = popupEl.querySelector('.show-btn');
-            if (!btn) return;
-
-            // 可能なら既存 handler を削除して二重登録を防ぐ
-            if (btn._vmHandler) btn.removeEventListener('click', btn._vmHandler);
-
-            btn._vmHandler = function () {
-                const id = this.getAttribute('data-id');
-                fetch(`/api/vending-machines/${id}`)
-                    .then(r => {
-                        if (!r.ok) throw new Error('API error ' + r.status);
-                        return r.json();
-                    })
-                    .then(machine => {
-                        document.getElementById('modalTitle').textContent = machine.name ?? '自販機';
-                        const list = document.getElementById('modalItems');
-                        list.innerHTML = '';
-                        const invs = machine.inventories ?? [];
-                        if (invs.length === 0) {
-                            const li = document.createElement('li');
-                            li.textContent = '商品情報がありません';
-                            list.appendChild(li);
-                        } else {
-                            invs.forEach(inv => {
-                                const prod = inv.product ?? {};
-                                const li = document.createElement('li');
-                                li.textContent = `${prod.name ?? '不明'} — ¥${prod.price ?? '-'} (在庫: ${inv.stock ?? '-'})`;
-                                list.appendChild(li);
-                            });
-                        }
-                        openModal();
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        document.getElementById('modalTitle').textContent = '読み込みエラー';
-                        document.getElementById('modalItems').innerHTML = '<li>データ取得に失敗しました。</li>';
-                        openModal();
-                    });
-            };
-
-            btn.addEventListener('click', btn._vmHandler);
-        });
-
-        // ヘルパ
-        function escapeHtml(s) {
-            if (!s) return '';
-            return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
-        }
     </script>
 </body>
 </html>
